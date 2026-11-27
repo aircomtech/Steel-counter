@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -23,6 +23,7 @@ import {
   MessageSquare,
   PanelBottom,
   Phone,
+  RefreshCw,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -30,6 +31,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_SITE_DATA } from "@/lib/cms/defaults";
+import { seedMissingCmsData } from "@/lib/admin/seed-client";
 import type {
   AboutSection,
   Achievement,
@@ -131,6 +133,8 @@ export default function AdminDashboardClient({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [syncingDefaults, setSyncingDefaults] = useState(false);
+  const autoSeededRef = useRef(false);
 
   // CMS Data State
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_DATA.settings);
@@ -206,6 +210,21 @@ export default function AdminDashboardClient({
         supabase.from("media_library").select("*").order("created_at", { ascending: false }),
         supabase.from("admin_activity_logs").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
+
+      if (
+        !autoSeededRef.current &&
+        (!settingsRes.data ||
+          ((navRes.data?.length ?? 0) === 0 &&
+            (slidesRes.data?.length ?? 0) === 0 &&
+            (prjRes.data?.length ?? 0) === 0))
+      ) {
+        autoSeededRef.current = true;
+        const { seededTables } = await seedMissingCmsData(supabase);
+        if (seededTables.length > 0) {
+          await loadAll();
+          return;
+        }
+      }
 
       if (settingsRes.data) setSettings(settingsRes.data as SiteSettings);
       if (navRes.data) setNavigation(navRes.data as NavigationItem[]);
@@ -403,14 +422,45 @@ export default function AdminDashboardClient({
             </span>
           </div>
 
-          <a
-            href="/"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 hover:border-[#0d1b2b] text-xs font-bold text-slate-800 shrink-0"
-          >
-            View Live Website <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={syncingDefaults}
+              onClick={async () => {
+                setSyncingDefaults(true);
+                try {
+                  const { seededTables } = await seedMissingCmsData(supabase);
+                  await loadAll();
+                  if (seededTables.length > 0) {
+                    notify(
+                      "success",
+                      `Imported past website data into ${seededTables.length} empty section(s).`,
+                    );
+                  } else {
+                    notify("success", "All sections already have data.");
+                  }
+                } catch {
+                  notify("error", "Failed to sync past website data.");
+                } finally {
+                  setSyncingDefaults(false);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 hover:border-[#0d1b2b] disabled:opacity-60 text-xs font-bold text-slate-800 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingDefaults ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">
+                {syncingDefaults ? "Syncing..." : "Sync Past Data"}
+              </span>
+            </button>
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 hover:border-[#0d1b2b] text-xs font-bold text-slate-800"
+            >
+              View Live Website <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">

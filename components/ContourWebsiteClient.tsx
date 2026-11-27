@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { optimizeImageUrl } from "@/lib/cloudinary";
 import type { ProjectItem, PublishedSiteData } from "@/lib/cms/types";
 
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function ContourWebsiteClient({ initialData }: Props) {
+  const router = useRouter();
   const {
     settings,
     navigation,
@@ -52,6 +55,33 @@ export default function ContourWebsiteClient({ initialData }: Props) {
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    try {
+      const supabase = createClient();
+      const channel = supabase
+        .channel("cms-live-sync")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public" },
+          () => {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+              router.refresh();
+            }, 300);
+          },
+        )
+        .subscribe();
+
+      return () => {
+        window.clearTimeout(timer);
+        supabase.removeChannel(channel);
+      };
+    } catch {
+      return undefined;
+    }
+  }, [router]);
 
   const slideCount = heroSlides.length;
   const safeSlideIndex = slideCount > 0 ? activeSlide % slideCount : 0;

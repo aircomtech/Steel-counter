@@ -208,7 +208,41 @@ export const DEFAULT_SITE_DATA: PublishedSiteData = {
     { id: "ach-8", icon: "P", figure: "3,000", unit: "Vehicles", description: "Massive five-level multi-level car park infrastructure.", is_featured: false, display_order: 8, is_published: true },
     { id: "ach-9", icon: "⌁", figure: "70 + 30 MT", unit: "Load", description: "Maximum EOT crane capacity on a 24-meter clear span.", is_featured: false, display_order: 9, is_published: true },
   ],
-  milestones: [],
+  milestones: [
+    {
+      id: "ms-1",
+      year_label: "2007",
+      title: "Foundation & Engineering Roots",
+      subtitle: "Hyderabad",
+      description:
+        "Established Contour Steel Engineering with a focus on precision pre-engineered steel structures.",
+      image_url: null,
+      display_order: 1,
+      is_published: true,
+    },
+    {
+      id: "ms-2",
+      year_label: "2015",
+      title: "5-Acre Manufacturing Expansion",
+      subtitle: "Seriguda Plant",
+      description:
+        "Commissioned our 20,234 sq. m. automated H-beam, CNC cutting and SAW welding facility.",
+      image_url: null,
+      display_order: 2,
+      is_published: true,
+    },
+    {
+      id: "ms-3",
+      year_label: "2026",
+      title: "1,100+ Structures & 30M Sq. Ft.",
+      subtitle: "Pan-India Delivery",
+      description:
+        "Delivered complex multi-storey refineries, logistics townships, factories and commercial landmarks.",
+      image_url: null,
+      display_order: 3,
+      is_published: true,
+    },
+  ],
   services: [
     { id: "svc-1", item_number: "01", title: "Pre-Engineered Buildings", description: "Optimized primary and secondary framing engineered for speed, economy and dependable performance.", icon: "↗", image_url: null, cta_url: "#contact", display_order: 1, is_published: true },
     { id: "svc-2", item_number: "02", title: "Turnkey Project Delivery", description: "One accountable partner—from concept to design, engineering and detailing through fabrication, dispatch and erection.", icon: "↗", image_url: null, cta_url: "#contact", display_order: 2, is_published: true },
