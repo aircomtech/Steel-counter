@@ -472,3 +472,24 @@ begin
     execute format('create policy "Admin full access %I" on public.%I for all to authenticated using (auth.uid() is not null) with check (auth.uid() is not null)', tbl, tbl);
   end loop;
 end $$;
+
+-- Storage bucket for CMS media uploads
+insert into storage.buckets (id, name, public)
+values ('cms-media', 'cms-media', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Public read cms-media" on storage.objects;
+create policy "Public read cms-media" on storage.objects
+for select to anon, authenticated using (bucket_id = 'cms-media');
+
+drop policy if exists "Admin upload cms-media" on storage.objects;
+create policy "Admin upload cms-media" on storage.objects
+for insert to authenticated with check (bucket_id = 'cms-media');
+
+drop policy if exists "Admin update cms-media" on storage.objects;
+create policy "Admin update cms-media" on storage.objects
+for update to authenticated using (bucket_id = 'cms-media');
+
+drop policy if exists "Admin delete cms-media" on storage.objects;
+create policy "Admin delete cms-media" on storage.objects
+for delete to authenticated using (bucket_id = 'cms-media');

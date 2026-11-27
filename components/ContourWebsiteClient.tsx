@@ -221,7 +221,7 @@ export default function ContourWebsiteClient({ initialData }: Props) {
                 <div
                   key={slide.id}
                   className={`heroSlide ${index === safeSlideIndex ? "isActive" : ""}`}
-                  style={{ backgroundImage: `url(${bgImg})` }}
+                  style={{ backgroundImage: `url("${bgImg}")` }}
                   aria-hidden={index !== safeSlideIndex}
                 >
                   {slide.video_url && (

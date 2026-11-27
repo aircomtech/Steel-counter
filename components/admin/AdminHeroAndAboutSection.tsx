@@ -278,7 +278,14 @@ export function HeroSliderPanel({
               mediaItems={media}
               onMediaUploaded={onMediaUploaded}
               onChange={(url) =>
-                setEditing({ ...editing, desktop_image_url: url })
+                setEditing({
+                  ...editing,
+                  desktop_image_url: url,
+                  video_url:
+                    url && url !== editing.desktop_image_url
+                      ? ""
+                      : editing.video_url,
+                })
               }
             />
             <ImageUploaderField

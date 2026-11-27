@@ -1,3 +1,5 @@
+import { createClient } from "./supabase/client";
+
 export const MEDIA_FOLDERS = [
   "hero",
   "about",
@@ -74,6 +76,51 @@ export function optimizeImageUrl(url: string | null | undefined, width?: number)
   return `${prefix}${transforms}/${rest}`;
 }
 
+async function uploadToSupabaseFallback(
+  file: File,
+  folder: MediaFolder,
+  onProgress?: (percent: number) => void,
+): Promise<UploadedMediaResult> {
+  const supabase = createClient();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const objectPath = `${folder}/${Date.now()}-${safeName}`;
+
+  if (onProgress) onProgress(35);
+
+  const { error } = await supabase.storage
+    .from("cms-media")
+    .upload(objectPath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+
+  if (error) {
+    throw new Error(
+      `Image upload failed: ${error.message}. Either enable unsigned uploads for your Cloudinary preset or create the 'cms-media' storage bucket in Supabase.`,
+    );
+  }
+
+  if (onProgress) onProgress(95);
+
+  const { data: urlData } = supabase.storage
+    .from("cms-media")
+    .getPublicUrl(objectPath);
+
+  if (onProgress) onProgress(100);
+
+  return {
+    public_id: `storage/${objectPath}`,
+    secure_url: urlData.publicUrl,
+    original_filename: file.name,
+    format: file.name.split(".").pop() || "",
+    width: null,
+    height: null,
+    bytes: file.size,
+    folder,
+  };
+}
+
 export async function uploadImageAsset(
   file: File,
   folder: MediaFolder,
@@ -110,49 +157,53 @@ export async function uploadImageAsset(
     formData.append("upload_preset", config.uploadPreset);
   }
 
-  return new Promise<UploadedMediaResult>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", endpoint);
+  try {
+    return await new Promise<UploadedMediaResult>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", endpoint);
 
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && onProgress) {
-        onProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          resolve({
-            public_id: data.public_id,
-            secure_url: data.secure_url,
-            original_filename: data.original_filename || file.name,
-            format: data.format || "",
-            width: typeof data.width === "number" ? data.width : null,
-            height: typeof data.height === "number" ? data.height : null,
-            bytes: typeof data.bytes === "number" ? data.bytes : file.size,
-            folder,
-          });
-        } catch {
-          reject(new Error("Invalid response received from media server."));
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && onProgress) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
         }
-      } else {
-        let message = "Image upload failed.";
-        try {
-          const errData = JSON.parse(xhr.responseText);
-          message = errData?.error?.message || message;
-        } catch {
-          // ignore
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve({
+              public_id: data.public_id,
+              secure_url: data.secure_url,
+              original_filename: data.original_filename || file.name,
+              format: data.format || "",
+              width: typeof data.width === "number" ? data.width : null,
+              height: typeof data.height === "number" ? data.height : null,
+              bytes: typeof data.bytes === "number" ? data.bytes : file.size,
+              folder,
+            });
+          } catch {
+            reject(new Error("Invalid response received from media server."));
+          }
+        } else {
+          let message = "Image upload failed.";
+          try {
+            const errData = JSON.parse(xhr.responseText);
+            message = errData?.error?.message || message;
+          } catch {
+            // ignore
+          }
+          reject(new Error(message));
         }
-        reject(new Error(message));
-      }
-    };
+      };
 
-    xhr.onerror = () => {
-      reject(new Error("Network error occurred during image upload."));
-    };
+      xhr.onerror = () => {
+        reject(new Error("Network error occurred during image upload."));
+      };
 
-    xhr.send(formData);
-  });
+      xhr.send(formData);
+    });
+  } catch {
+    return await uploadToSupabaseFallback(file, folder, onProgress);
+  }
 }
