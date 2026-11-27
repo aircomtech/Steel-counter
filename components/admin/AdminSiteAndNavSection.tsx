@@ -930,23 +930,55 @@ export function AdminSettingsPanel({
   userEmail: string;
   onNotify: (type: "success" | "error", message: string) => void;
 }) {
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   async function handlePasswordUpdate(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      onNotify("error", "Password must be at least 8 characters.");
+    if (!currentPassword) {
+      onNotify("error", "Please enter your current password.");
       return;
     }
+    if (newPassword.length < 8) {
+      onNotify("error", "New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      onNotify("error", "New password and confirm password do not match.");
+      return;
+    }
+
     setUpdating(true);
     try {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: userEmail,
+        password: currentPassword,
+      });
+      if (verifyError) {
+        onNotify("error", "Current password is incorrect.");
+        setUpdating(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
       if (error) throw error;
+
+      await recordAdminActivity(supabase, {
+        actorEmail: userEmail,
+        action: "UPDATE",
+        module: "Admin Settings",
+        summary: "Updated administrator account password",
+      });
+
+      setCurrentPassword("");
       setNewPassword("");
-      onNotify("success", "Administrator password updated.");
+      setConfirmPassword("");
+      onNotify("success", "Administrator password updated successfully.");
     } catch (err) {
       onNotify(
         "error",
@@ -967,7 +999,7 @@ export function AdminSettingsPanel({
       <div>
         <h2 className="text-xl font-bold text-slate-900">Admin Settings</h2>
         <p className="text-sm text-slate-500">
-          Account security and manual website synchronization controls.
+          Account security, password management, and website synchronization.
         </p>
       </div>
 
@@ -977,17 +1009,30 @@ export function AdminSettingsPanel({
           className="bg-white border border-slate-200 p-5 space-y-4"
         >
           <h3 className="text-sm font-bold uppercase text-slate-800">
-            Account & Password
+            Change Admin Password
           </h3>
           <p className="text-xs text-slate-500">
             Signed in as <strong className="text-slate-800">{userEmail}</strong>
           </p>
           <div>
             <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type={showPasswords ? "text" : "password"}
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="w-full px-3 py-2 border border-slate-300 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
               New Password
             </label>
             <input
-              type="password"
+              type={showPasswords ? "text" : "password"}
               minLength={8}
               required
               value={newPassword}
@@ -996,10 +1041,32 @@ export function AdminSettingsPanel({
               className="w-full px-3 py-2 border border-slate-300 text-sm"
             />
           </div>
+          <div>
+            <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type={showPasswords ? "text" : "password"}
+              minLength={8}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="w-full px-3 py-2 border border-slate-300 text-sm"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showPasswords}
+              onChange={(e) => setShowPasswords(e.target.checked)}
+            />
+            Show passwords
+          </label>
           <button
             type="submit"
             disabled={updating}
-            className="px-4 py-2 bg-[#0d1b2b] text-white text-xs font-bold cursor-pointer"
+            className="px-4 py-2.5 bg-[#0d1b2b] hover:bg-[#172c44] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
           >
             {updating ? "Updating..." : "Update Password"}
           </button>

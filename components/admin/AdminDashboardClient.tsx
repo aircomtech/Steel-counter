@@ -361,8 +361,18 @@ export default function AdminDashboardClient({
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/10 space-y-2">
+        <div className="p-3 border-t border-white/10 space-y-1">
           <p className="text-[11px] text-slate-400 truncate px-2">{userEmail}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("admin-settings");
+              setSidebarOpen(false);
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10 cursor-pointer"
+          >
+            <Settings className="w-4 h-4" /> Change Password
+          </button>
           <button
             type="button"
             onClick={handleLogout}
