@@ -116,11 +116,15 @@ const SIDEBAR_ITEMS: { id: AdminTab; label: string; icon: React.ComponentType<{ 
 
 export default function AdminDashboardClient({
   userEmail,
+  supabaseUrl,
+  supabaseAnonKey,
 }: {
   userEmail: string;
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
 }) {
   const router = useRouter();
-  const [supabase] = useState(() => createClient());
+  const [supabase] = useState(() => createClient(supabaseUrl, supabaseAnonKey));
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
