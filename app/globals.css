@@ -19,3 +19,25 @@ footer{background:#050b12;color:white;padding:36px 0}.footerGrid{display:grid;gr
 @media(max-width:600px){.shell{width:min(100% - 32px,1180px)}.section{padding:78px 0}.siteHeader{height:76px}.mobileNav{top:76px;left:16px;right:16px}.slideLogo{width:168px;height:58px}.slideLogo img{width:168px}.heroContent{padding:46px 0 30px}.heroTrademark{display:none}.hero h1{font-size:42px}.heroCopy{font-size:15px}.heroActions{flex-direction:column;align-items:stretch}.button{justify-content:space-between}.slideControls{grid-template-columns:36px 1fr 36px}.slideControls>button{width:36px;height:36px}.slideDots button{padding-left:4px;padding-right:4px}.stats{width:100%;grid-template-columns:1.15fr repeat(3,1fr)}.stats>div{padding:13px 5px;text-align:center}.stats strong{font-size:18px}.stats span{font-size:6px}.stats .achievementLead{padding-left:7px;text-align:left}.stats .achievementLead b{font-size:11px}.stats .achievementLead span{font-size:6px}.achievementGrid{grid-template-columns:1fr}.achievementGrid article{min-height:235px}.achievementGrid strong{margin-top:34px}.mapWrap{height:280px}.locationInfo{padding:27px}.introGrid{margin-top:42px}.capGrid{grid-template-columns:1fr}.capGrid article{min-height:240px;border-right:0;border-bottom:1px solid var(--line)}.capGrid h3{margin-top:35px}.machineGrid{grid-template-columns:1fr}.galleryGrid{columns:1}.machineGrid img{height:240px}.galleryGrid img{height:auto}.facilityHero>div{padding:36px 26px}.standards>div{grid-template-columns:1fr}.why ul{grid-template-columns:1fr}.contact form{grid-template-columns:1fr}.contact label{grid-column:1/-1}.footerGrid{grid-template-columns:1fr}.footerGrid div:nth-child(3){justify-content:flex-start}}
 @media(prefers-reduced-motion:no-preference){.heroContent>*{animation:rise .65s both}.heroContent>*:nth-child(2){animation-delay:.06s}.heroContent>*:nth-child(3){animation-delay:.12s}.heroContent>*:nth-child(4){animation-delay:.18s}.heroContent>*:nth-child(5){animation-delay:.24s}@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}}
 @media(prefers-reduced-motion:reduce){.heroSlide{transition:none;transform:none}}
+.projectFilters{display:flex;flex-wrap:wrap;gap:8px;margin-top:36px}
+.projectFilters button{padding:9px 16px;border:1px solid #cfd3d6;background:#fff;color:var(--ink);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:.2s}
+.projectFilters button:hover{border-color:var(--navy)}
+.projectFilters button.isActive{background:var(--navy);color:#fff;border-color:var(--navy)}
+.milestoneStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.milestoneCard{background:#fff;border:1px solid #bec3c6;padding:26px}
+.milestoneYear{display:inline-block;color:var(--red);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.milestoneCard h3{font-size:19px;margin:10px 0 4px}
+.milestoneCard small{display:block;color:#66717a;font-size:12px;font-weight:700;margin-bottom:10px}
+.milestoneCard p{color:#66717a;font-size:14px;line-height:1.55;margin:0}
+.projectModalBackdrop{position:fixed;inset:0;z-index:50;background:rgba(5,11,18,.78);display:grid;place-items:center;padding:24px}
+.projectModal{position:relative;width:min(780px,100%);max-height:90vh;overflow-y:auto;background:#fff;color:var(--ink);border:1px solid #d7dadd}
+.projectModal>img{width:100%;max-height:420px;object-fit:cover;display:block}
+.projectModalClose{position:absolute;top:14px;right:14px;width:36px;height:36px;border:0;background:rgba(8,17,28,.85);color:#fff;font-size:16px;cursor:pointer}
+.projectModalBody{padding:28px}
+.projectModalBody span{color:var(--red);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em}
+.projectModalBody h3{font-size:26px;margin:8px 0 10px}
+.projectModalMeta{font-size:13px;font-weight:700;color:#5f6872;margin:0 0 12px}
+.projectModalBody p{font-size:15px;line-height:1.65;color:#4a545e;margin:0}
+.projectModalGallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.projectModalGallery img{width:100%;height:120px;object-fit:cover;display:block}
+@media(max-width:768px){.milestoneStrip{grid-template-columns:1fr}.projectModalGallery{grid-template-columns:repeat(2,1fr)}}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getPublishedSeoSettings } from "@/lib/cms/queries";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,22 +13,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Turnkey Pre-Engineered Steel Buildings | Contour Steel",
-  description:
-    "Contour Steel engineers turnkey Pre-Engineered Buildings (PEB), industrial refineries, factories and high-performance steel buildings across India.",
-  other: {
-    "codex-preview": "development",
-  },
-  keywords: [
-    "pre-engineered buildings India",
-    "PEB manufacturer Hyderabad",
-    "turnkey steel buildings",
-    "industrial steel structures",
-    "industrial refinery steel buildings",
-    "pre-engineered factory buildings",
-  ],
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await getPublishedSeoSettings();
+  const keywordList = seo.keywords
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  return {
+    title: seo.site_title,
+    description: seo.meta_description,
+    keywords: keywordList,
+    alternates: seo.canonical_url
+      ? { canonical: seo.canonical_url }
+      : undefined,
+    icons: seo.favicon_url ? { icon: seo.favicon_url } : undefined,
+    openGraph: {
+      title: seo.og_title || seo.site_title,
+      description: seo.og_description || seo.meta_description,
+      images: seo.og_image_url ? [{ url: seo.og_image_url }] : undefined,
+    },
+    other: {
+      "codex-preview": "development",
+    },
+  };
+}
 
 export default function RootLayout({
   children,
