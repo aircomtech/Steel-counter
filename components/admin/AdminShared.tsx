@@ -5,7 +5,6 @@ import { AlertTriangle, CheckCircle2, X, XCircle } from "lucide-react";
 export type AdminTab =
   | "dashboard"
   | "website-settings"
-  | "navigation"
   | "hero-slider"
   | "about"
   | "achievements"

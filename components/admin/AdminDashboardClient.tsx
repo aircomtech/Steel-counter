@@ -8,7 +8,6 @@ import {
   Briefcase,
   Building2,
   CheckSquare,
-  Compass,
   ExternalLink,
   Factory,
   FolderKanban,
@@ -67,7 +66,6 @@ import {
   ActivityLogsPanel,
   AdminSettingsPanel,
   FooterPanel,
-  NavigationPanel,
   SeoPanel,
   WebsiteSettingsPanel,
 } from "./AdminSiteAndNavSection";
@@ -96,7 +94,6 @@ import {
 const SIDEBAR_ITEMS: { id: AdminTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "website-settings", label: "Website Settings", icon: Settings },
-  { id: "navigation", label: "Navigation Management", icon: Compass },
   { id: "hero-slider", label: "Hero Slider Management", icon: SlidersHorizontal },
   { id: "about", label: "About Us Management", icon: Info },
   { id: "achievements", label: "Achievements Management", icon: Award },
@@ -516,9 +513,6 @@ export default function AdminDashboardClient({
               )}
               {activeTab === "website-settings" && (
                 <WebsiteSettingsPanel settings={settings} {...sharedProps} />
-              )}
-              {activeTab === "navigation" && (
-                <NavigationPanel items={navigation} {...sharedProps} />
               )}
               {activeTab === "hero-slider" && (
                 <HeroSliderPanel
