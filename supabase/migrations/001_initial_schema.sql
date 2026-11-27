@@ -395,6 +395,13 @@ create index if not exists idx_enquiries_created on public.contact_enquiries (cr
 create index if not exists idx_media_folder on public.media_library (folder, created_at desc);
 create index if not exists idx_activity_created on public.admin_activity_logs (created_at desc);
 
+-- Grant schema & table permissions to anon and authenticated roles
+grant usage on schema public to anon, authenticated;
+grant select on all tables in schema public to anon;
+grant insert on public.contact_enquiries to anon;
+grant all on all tables in schema public to authenticated;
+grant all on all sequences in schema public to authenticated;
+
 -- Enable Row Level Security (RLS) on every table
 alter table public.site_settings enable row level security;
 alter table public.navigation_items enable row level security;

@@ -8,8 +8,9 @@ import { slugify, triggerWebsiteRevalidation } from "@/lib/admin/cms-helpers";
  */
 export async function seedMissingCmsData(
   supabase: SupabaseClient,
-): Promise<{ seededTables: string[] }> {
+): Promise<{ seededTables: string[]; errors: string[] }> {
   const seededTables: string[] = [];
+  const errors: string[] = [];
 
   // 1. Site Settings
   const { data: existingSettings } = await supabase
@@ -76,16 +77,24 @@ export async function seedMissingCmsData(
     table: string,
     rows: T[],
   ) {
-    const { count } = await supabase
+    const { count, error: countErr } = await supabase
       .from(table)
       .select("id", { count: "exact", head: true });
+    if (countErr) {
+      errors.push(`${table}: ${countErr.message}`);
+      return;
+    }
     if ((count ?? 0) === 0 && rows.length > 0) {
       const payload = rows.map(({ id: _id, ...rest }) => {
         void _id;
         return rest as Record<string, unknown>;
       });
       const { error } = await supabase.from(table).insert(payload);
-      if (!error) seededTables.push(table);
+      if (error) {
+        errors.push(`${table}: ${error.message}`);
+      } else {
+        seededTables.push(table);
+      }
     }
   }
 
@@ -127,9 +136,53 @@ export async function seedMissingCmsData(
     if (!error) seededTables.push("projects");
   }
 
+  // Seed media_library with existing website images if empty
+  const { count: mediaCount, error: mediaCountErr } = await supabase
+    .from("media_library")
+    .select("id", { count: "exact", head: true });
+  if (mediaCountErr) {
+    errors.push(`media_library: ${mediaCountErr.message}`);
+  } else if ((mediaCount ?? 0) === 0) {
+    const initialMediaMap = new Map<string, { url: string; folder: string; label: string }>();
+    for (const s of DEFAULT_SITE_DATA.heroSlides) {
+      initialMediaMap.set(s.desktop_image_url, { url: s.desktop_image_url, folder: "hero", label: s.title });
+    }
+    for (const f of DEFAULT_SITE_DATA.facilities) {
+      if (f.image_url) initialMediaMap.set(f.image_url, { url: f.image_url, folder: "facilities", label: f.title });
+    }
+    for (const p of DEFAULT_SITE_DATA.projects) {
+      initialMediaMap.set(p.cover_image_url, { url: p.cover_image_url, folder: "projects", label: p.title });
+    }
+    initialMediaMap.set(DEFAULT_SITE_DATA.settings.logo_url, {
+      url: DEFAULT_SITE_DATA.settings.logo_url,
+      folder: "branding",
+      label: "Contour Steel Trademark",
+    });
+
+    const mediaRows = Array.from(initialMediaMap.values()).map((item) => {
+      const filename = item.url.split("/").pop() || "image";
+      const ext = filename.split(".").pop() || "jpg";
+      return {
+        public_id: `local/${filename}`,
+        secure_url: item.url,
+        filename,
+        folder: item.folder,
+        format: ext,
+        alt_text: item.label,
+        uploaded_by: "system-seed",
+      };
+    });
+    const { error: mediaErr } = await supabase.from("media_library").insert(mediaRows);
+    if (mediaErr) {
+      errors.push(`media_library: ${mediaErr.message}`);
+    } else {
+      seededTables.push("media_library");
+    }
+  }
+
   if (seededTables.length > 0) {
     await triggerWebsiteRevalidation();
   }
 
-  return { seededTables };
+  return { seededTables, errors };
 }

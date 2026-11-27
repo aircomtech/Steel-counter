@@ -134,6 +134,7 @@ export default function AdminDashboardClient({
   const [confirm, setConfirm] = useState<ConfirmState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [syncingDefaults, setSyncingDefaults] = useState(false);
+  const [dbError, setDbError] = useState<string | null>(null);
   const autoSeededRef = useRef(false);
 
   // CMS Data State
@@ -211,6 +212,22 @@ export default function AdminDashboardClient({
         supabase.from("admin_activity_logs").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
+      const firstErr = [
+        settingsRes.error,
+        navRes.error,
+        slidesRes.error,
+        prjRes.error,
+        svcRes.error,
+      ].find(Boolean);
+
+      if (firstErr) {
+        setDbError(firstErr.message);
+        setLoading(false);
+        return;
+      }
+
+      setDbError(null);
+
       if (
         !autoSeededRef.current &&
         (!settingsRes.data ||
@@ -219,7 +236,10 @@ export default function AdminDashboardClient({
             (prjRes.data?.length ?? 0) === 0))
       ) {
         autoSeededRef.current = true;
-        const { seededTables } = await seedMissingCmsData(supabase);
+        const { seededTables, errors } = await seedMissingCmsData(supabase);
+        if (errors.length > 0) {
+          setDbError(errors[0]);
+        }
         if (seededTables.length > 0) {
           await loadAll();
           return;
@@ -429,9 +449,11 @@ export default function AdminDashboardClient({
               onClick={async () => {
                 setSyncingDefaults(true);
                 try {
-                  const { seededTables } = await seedMissingCmsData(supabase);
+                  const { seededTables, errors } = await seedMissingCmsData(supabase);
                   await loadAll();
-                  if (seededTables.length > 0) {
+                  if (errors.length > 0) {
+                    notify("error", errors[0]);
+                  } else if (seededTables.length > 0) {
                     notify(
                       "success",
                       `Imported past website data into ${seededTables.length} empty section(s).`,
@@ -463,7 +485,16 @@ export default function AdminDashboardClient({
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-4">
+          {dbError && (
+            <div
+              role="alert"
+              className="bg-red-50 border border-red-200 text-red-800 p-4 text-sm space-y-1"
+            >
+              <p className="font-bold">Database Setup / Permission Required</p>
+              <p>{dbError}</p>
+            </div>
+          )}
           {loading ? (
             <div className="bg-white border border-slate-200 p-12 text-center text-sm text-slate-500">
               Loading Contour Steel CMS...
